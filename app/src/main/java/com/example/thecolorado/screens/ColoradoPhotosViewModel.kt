@@ -5,6 +5,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.example.thecolorado.network.FlickrAPI
 import com.example.thecolorado.repository.FlickrImageRepository
 import com.example.thecolorado.room.getDatabase
 import kotlinx.coroutines.*
@@ -37,14 +38,15 @@ class ColoradoPhotosViewModel(application: Application) : ViewModel() {
 //
     private fun downloadImageList(tag: String, nojsoncallback: Int, format: String) {
         viewModelScope.launch {
-            try {
-                _status.value = RestApiStatus.LOADING
-                flickrImageRepository.refreshImageData(tag,nojsoncallback,format)
-                _status.value = RestApiStatus.DONE
-            } catch (e: Exception) {
-                if(imageList.value?.isEmpty()!!)
-                _status.value = RestApiStatus.ERROR
-            }
+//            try {
+//                _status.value = RestApiStatus.LOADING
+//                flickrImageRepository.refreshImageData(tag,nojsoncallback,format)
+//                _status.value = RestApiStatus.DONE
+//            } catch (e: Exception) {
+//                if(imageList.value?.isEmpty()!!)
+//                _status.value = RestApiStatus.ERROR
+//            }
+            flickrImageRepository.refreshImageData(tag,nojsoncallback,format)
         }
     }
 
@@ -52,6 +54,27 @@ class ColoradoPhotosViewModel(application: Application) : ViewModel() {
         super.onCleared()
         viewModelJob.cancel()
     }
+
+
+//    init {
+//        downloadImageList("coloradomountains", 1, "json")
+//    }
+//
+//    private fun downloadImageList(tag: String, nojsoncallback: Int, format: String) {
+//        uiScope.launch {
+//            val getImageDeferredList =
+//                FlickrAPI.retrofitService.getPhotos(tag, nojsoncallback, format)
+//            try {
+//                _status.value = RestApiStatus.LOADING
+//                val listresult = getImageDeferredList.await()
+//                _status.value = RestApiStatus.DONE
+//                _getImageList.value = listresult
+//            } catch (e: Exception) {
+//                _status.value = RestApiStatus.ERROR
+//                _getImageList.value = null
+//            }
+//        }
+//    }
 
 
     class Factory(val app: Application) : ViewModelProvider.Factory {

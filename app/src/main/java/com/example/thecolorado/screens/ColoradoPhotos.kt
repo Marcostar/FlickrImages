@@ -1,5 +1,6 @@
 package com.example.thecolorado.screens
 
+import android.app.Application
 import androidx.lifecycle.ViewModelProviders
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -20,8 +21,15 @@ import com.example.thecolorado.databinding.ColoradoPhotosFragmentBinding
 class ColoradoPhotos : Fragment() {
 
 
-    private lateinit var viewModel: ColoradoPhotosViewModel
     private lateinit var binding: ColoradoPhotosFragmentBinding
+
+    private val viewModel: ColoradoPhotosViewModel by lazy {
+        val activity = requireNotNull(this.activity) {
+            "You can only access the viewModel after onActivityCreated()"
+        }
+        ViewModelProviders.of(this, ColoradoPhotosViewModel.Factory(activity.application))
+            .get(ColoradoPhotosViewModel::class.java)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -32,12 +40,16 @@ class ColoradoPhotos : Fragment() {
             inflater,
             R.layout.colorado_photos_fragment, container, false
         )
+
+        binding.setLifecycleOwner(this)
+
         return binding.root
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        viewModel = ViewModelProviders.of(this).get(ColoradoPhotosViewModel::class.java)
+
+
 
         binding.coloradoPhotoViewModel = viewModel
 
@@ -52,8 +64,8 @@ class ColoradoPhotos : Fragment() {
         binding.photoList.adapter = adapter
 
 
-        viewModel.getImageList.observe(viewLifecycleOwner, Observer {
-            adapter.submitList(it.items)
+        viewModel.imageList.observe(viewLifecycleOwner, Observer {
+            adapter.submitList(it)
         })
 
     }

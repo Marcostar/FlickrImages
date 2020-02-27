@@ -1,52 +1,49 @@
 package com.example.thecolorado.screens
 
+import android.app.Application
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.example.thecolorado.data.LatestImages
-import com.example.thecolorado.network.FlickrAPI
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
+import androidx.lifecycle.ViewModelProvider
+import com.example.thecolorado.repository.FlickrImageRepository
+import com.example.thecolorado.room.getDatabase
+import kotlinx.coroutines.*
 import java.lang.Exception
 
 
 enum class RestApiStatus { LOADING, ERROR, DONE }
 
-class ColoradoPhotosViewModel : ViewModel() {
+class ColoradoPhotosViewModel(application: Application) : ViewModel() {
+
+    private val flickrImageRepository = FlickrImageRepository(getDatabase(application))
+
+
+    val imageList = flickrImageRepository.imageList
+
 
     private val _status = MutableLiveData<RestApiStatus>()
 
     val status: LiveData<RestApiStatus>
         get() = _status
 
-    private var viewModelJob = Job()
+    private var viewModelJob = SupervisorJob()
 
-    private val uiScope = CoroutineScope(Dispatchers.Main + viewModelJob)
-
-    private val _getImageList = MutableLiveData<LatestImages>()
-
-    val getImageList: LiveData<LatestImages>
-        get() = _getImageList
+    private val viewModelScope = CoroutineScope(Dispatchers.Main + viewModelJob)
 
 
     init {
         downloadImageList("coloradomountains", 1, "json")
     }
-
+//
     private fun downloadImageList(tag: String, nojsoncallback: Int, format: String) {
-        uiScope.launch {
-            val getImageDeferredList =
-                FlickrAPI.retrofitService.getPhotos(tag, nojsoncallback, format)
+        viewModelScope.launch {
             try {
                 _status.value = RestApiStatus.LOADING
-                val listresult = getImageDeferredList.await()
+                flickrImageRepository.refreshImageData(tag,nojsoncallback,format)
                 _status.value = RestApiStatus.DONE
-                _getImageList.value = listresult
             } catch (e: Exception) {
+                if(imageList.value?.isEmpty()!!)
                 _status.value = RestApiStatus.ERROR
-                _getImageList.value = null
             }
         }
     }
@@ -55,4 +52,16 @@ class ColoradoPhotosViewModel : ViewModel() {
         super.onCleared()
         viewModelJob.cancel()
     }
+
+
+    class Factory(val app: Application) : ViewModelProvider.Factory {
+        override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+            if (modelClass.isAssignableFrom(ColoradoPhotosViewModel::class.java)) {
+                @Suppress("UNCHECKED_CAST")
+                return ColoradoPhotosViewModel(app) as T
+            }
+            throw IllegalArgumentException("Unable to construct viewmodel")
+        }
+    }
+
 }

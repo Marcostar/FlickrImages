@@ -1,4 +1,4 @@
-# FlickrImages
+# FlickrImages (Android)
 Staggered Image recyclerview with MVVM, Kotlin using Flickr endpoint sample with static flickr end point
 
 ![output](https://github.com/Marcostar/FlickrImages/blob/master/trackvia.png)
